@@ -285,6 +285,11 @@ def get_log_limits() -> tuple[int, int]:
     """Return (max_lines, trim_to) for the recording log buffer."""
     return (60, 30) if _is_pi() else (100, 50)
 
+
+def _ts() -> str:
+    """Timestamp prefix for channel log lines (container local time, UTC unless tzdata is installed)."""
+    return time.strftime("[%H:%M:%S]")
+
 def get_frontend_poll_hint() -> int:
     return 10 if _is_pi() else 5
 
@@ -1039,12 +1044,12 @@ async def run_recording(rec_id: str):
                 stall_timeout = 240 if _is_pi() else 120
                 if time.time() - last_change > stall_timeout:
                     rec["log"].append(
-                        f"[StreamRec] WARNING — no data received for {stall_timeout}s. "
+                        f"{_ts()} [StreamRec] WARNING — no data received for {stall_timeout}s. "
                         "Stream may have ended silently."
                     )
                     if settings.get("auto_stop_stalled", False) and not rec.get("stopping"):
                         rec["log"].append(
-                            "[StreamRec] Auto-stop-stalled enabled — stopping recording."
+                            f"{_ts()} [StreamRec] Auto-stop-stalled enabled — stopping recording."
                         )
                         _stop_rec(rec, force=False)
 
@@ -1057,7 +1062,7 @@ async def run_recording(rec_id: str):
                 await asyncio.sleep(max_dur_mins * 60)
                 if rec.get("status") == "recording" and not rec.get("stopping"):
                     rec["log"].append(
-                        f"[StreamRec] Max recording duration ({max_dur_mins} min) reached — stopping gracefully"
+                        f"{_ts()} [StreamRec] Max recording duration ({max_dur_mins} min) reached — stopping gracefully"
                     )
                     _stop_rec(rec, force=False)
             duration_task = asyncio.create_task(_enforce_duration())
@@ -1069,7 +1074,7 @@ async def run_recording(rec_id: str):
                 line = line.strip()
                 if not line:
                     continue
-                rec["log"].append(line)
+                rec["log"].append(f"{_ts()} {line}")
                 log_max, log_trim = get_log_limits()
                 if len(rec["log"]) > log_max:
                     rec["log"] = rec["log"][-log_trim:]
@@ -1280,7 +1285,7 @@ async def run_recording(rec_id: str):
             delay      = settings.get("retry_delay", 15)
             if attempt <= max_retries:
                 rec["log"].append(
-                    f"[StreamRec] Stream disconnected. Retrying in {delay}s "
+                    f"{_ts()} [StreamRec] Stream disconnected. Retrying in {delay}s "
                     f"(attempt {attempt}/{max_retries})…"
                 )
                 await asyncio.sleep(delay)
@@ -2089,7 +2094,7 @@ async def cut_recording(rec_id: str, req: CutRecordingRequest):
             "speed": None,
             "filepath": str(dst_path),
             "filename": dst_path.name,
-            "log": [f"[StreamRec] Highlight clip created from {rec_id} ({int(duration)}s)"],
+            "log": [f"{_ts()} [StreamRec] Highlight clip created from {rec_id} ({int(duration)}s)"],
             "stopping": False,
             "auto": False,
             "is_favorite": True,  # Auto-favorite user clips
