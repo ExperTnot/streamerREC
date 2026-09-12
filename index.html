@@ -338,6 +338,9 @@ select.sel{height:34px;padding:0 26px 0 10px;border-radius:8px;background:var(--
               </a></div>
           </div>
         </div>
+        <div class="sbox" style="margin-top:20px">
+          <div class="srow"><div class="lbl"><b>Apply Settings</b><span>Nothing on this page is stored until you save</span></div><button class="btn btn-acc" onclick="saveSettings()">Save Settings</button></div>
+        </div>
       </div>
     </div>
   </div>
@@ -382,6 +385,7 @@ select.sel{height:34px;padding:0 26px 0 10px;border-radius:8px;background:var(--
       <div class="fg"><label>Max duration</label><input class="tin" type="number" id="chDur" min="0" style="width:100%"></div>
     </div>
     <div class="fg"><label>Notes</label><input id="chNotes"></div>
+    <div class="fg"><label>Extra yt-dlp flags</label><input id="chExtra" placeholder="--video-password XYZ"></div>
     <div class="mact" style="justify-content:space-between">
       <button class="btn btn-ghost" style="color:var(--acc)" onclick="delCh()">Delete</button>
       <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="closeCh()">Cancel</button><button class="btn btn-acc" onclick="saveCh()">Save</button></div>
@@ -512,9 +516,9 @@ async function doAdd(){
 }
 
 /* channel settings */
-function openCh(id){const c=channels[id];if(!c)return;$('chId').value=id;$('chTitle').textContent=c.display_name||'Settings';$('chQ').value=c.quality||'';$('chF').value=c.format||'';$('chKeep').value=c.max_streams||0;$('chDur').value=c.max_duration||0;$('chNotes').value=c.notes||'';$('chOv').classList.add('open')}
+function openCh(id){const c=channels[id];if(!c)return;$('chId').value=id;$('chTitle').textContent=c.display_name||'Settings';$('chQ').value=c.quality||'';$('chF').value=c.format||'';$('chKeep').value=c.max_streams||0;$('chDur').value=c.max_duration||0;$('chNotes').value=c.notes||'';$('chExtra').value=c.extra_args||'';$('chOv').classList.add('open')}
 function closeCh(){$('chOv').classList.remove('open')}
-async function saveCh(){const id=$('chId').value;try{await api(`/api/channels/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({quality:$('chQ').value||null,format:$('chF').value||null,max_streams:+$('chKeep').value||0,max_duration:+$('chDur').value||0,notes:$('chNotes').value.trim()||null})});toast('Saved');closeCh();fetchChannels()}catch(e){toast(e.message,true)}}
+async function saveCh(){const id=$('chId').value;try{await api(`/api/channels/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({quality:$('chQ').value||null,format:$('chF').value||null,max_streams:+$('chKeep').value||0,max_duration:+$('chDur').value||0,notes:$('chNotes').value.trim()||null,extra_args:$('chExtra').value.trim()||null})});toast('Saved');closeCh();fetchChannels()}catch(e){toast(e.message,true)}}
 
 /* logs */
 function openLog(id){logCh=id;const c=channels[id];$('logTitle').textContent='LOG · '+((c?.display_name||id).toUpperCase());$('logDrawer').classList.add('open');refreshLog()}
